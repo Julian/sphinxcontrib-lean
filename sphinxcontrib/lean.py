@@ -9,7 +9,6 @@ import sphinx.domains
 import sphinx.util.docutils
 import sphinx.util.nodes
 
-
 logger = logging.getLogger(__name__)
 
 
