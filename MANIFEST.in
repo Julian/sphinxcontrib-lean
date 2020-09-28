@@ -1,0 +1,6 @@
+graft sphinxcontrib/leansrc/
+include *.rst
+include .coveragerc
+include COPYING
+include pyproject.toml
+include tox.ini
