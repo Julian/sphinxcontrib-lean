@@ -1,11 +1,12 @@
 from docutils import nodes
 from docutils.parsers.rst import directives
+from sphinx import addnodes
+from sphinx.domains import Domain, ObjType
 from sphinx.locale import _, __
+from sphinx.roles import XRefRole
 from sphinx.util import logging
 import attr
-import sphinx.addnodes
 import sphinx.directives
-import sphinx.domains
 import sphinx.util.docutils
 import sphinx.util.nodes
 
@@ -55,32 +56,49 @@ class ModuleDirective(sphinx.util.docutils.SphinxDirective):
             # used in the modindex currently
             ret.append(target)
             indextext = "%s; %s" % (pairindextypes["module"], modname)
-            inode = sphinx.addnodes.index(
+            inode = addnodes.index(
                 entries=[("pair", indextext, node_id, "", None)],
             )
             ret.append(inode)
         return ret
 
 
-class ConstantDirective(sphinx.directives.ObjectDescription):
-    pass
+class LeanObjectDescription(sphinx.directives.ObjectDescription):
+    def handle_signature(self, sig, signode):
+        signode += addnodes.desc_annotation(self.lean_kind, self.lean_kind)
+        signode += addnodes.desc_name(" " + sig, " " + sig)
+        return sig
 
 
-class DefinitionDirective(sphinx.directives.ObjectDescription):
-    pass
+class ConstantDirective(LeanObjectDescription):
+
+    lean_kind = "constant"
 
 
-class TheoremDirective(sphinx.directives.ObjectDescription):
-    pass
+class DefinitionDirective(LeanObjectDescription):
+
+    lean_kind = "def"
 
 
-class StructureFieldDirective(sphinx.directives.ObjectDescription):
-    pass
+class TheoremDirective(LeanObjectDescription):
+
+    lean_kind = "theorem"
 
 
-class Lean(sphinx.domains.Domain):
+class StructureFieldDirective(LeanObjectDescription):
+
+    lean_kind = "field"
+
+
+class Lean(Domain):
 
     name = label = "lean"
+    object_types = {
+        "constant": ObjType(_("constant"), "constant", "obj"),
+        "definition": ObjType(_("definition"), "definition", "obj"),
+        "theorem": ObjType(_("theorem"), "theorem", "obj"),
+        "field": ObjType(_("field"), "field", "obj"),
+    }
 
     directives = dict(
         constant=ConstantDirective,
@@ -89,6 +107,13 @@ class Lean(sphinx.domains.Domain):
         theorem=TheoremDirective,
         module=ModuleDirective,
     )
+
+    roles = {
+        "constant": XRefRole(),
+        "definition": XRefRole(),
+        "theorem": XRefRole(),
+        "field": XRefRole(),
+    }
 
     @property
     def modules(self):
